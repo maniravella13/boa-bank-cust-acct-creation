@@ -1,0 +1,19 @@
+http:
+  port: "8081"
+  
+
+db:
+  Account Name: "ACDEHQQ-VD68486"
+  Warehouse: "COMPUTE_WH"
+  Database: "BAO"
+  Schema: "BFS"
+  User: "MANI1999"
+  Password: "Mani.chandana1999"
+  Role: "accountadmin"
+  
+  
+email:
+  host: "smtp.gmail.com"
+  port: "587"
+  user: "manimulesoft1999@gmail.com"
+  password: "vmnspeplrchxjaur"

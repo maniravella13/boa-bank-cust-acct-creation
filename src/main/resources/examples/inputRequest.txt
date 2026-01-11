@@ -1,0 +1,13 @@
+
+{
+  "atmPin":"1234",
+  "totalBalance": "40000",
+  "accountType": "savings",
+  "custAccNum": "1234567897",
+  "accountStatus": "Active",
+  "wrongPin": 1,
+  "phoneNumber": "8106351021",
+  "mailId": "mani@gmail.com",
+  "ifscCode": "ICIC4002",
+  "cid": 100
+}

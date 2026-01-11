@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:email="http://www.mulesoft.org/schema/mule/email" xmlns:snowflake="http://www.mulesoft.org/schema/mule/snowflake" xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd 
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/snowflake http://www.mulesoft.org/schema/mule/snowflake/current/mule-snowflake.xsd
+http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/email/current/mule-email.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd">
+    <http:listener-config name="boa-bank-cust-acct-creation-httpListenerConfig">
+        <http:listener-connection host="0.0.0.0" port="${http.port}" />
+    </http:listener-config>
+    <apikit:config name="boa-bank-cust-acct-creation-config" api="resource::7088bc54-caf8-4151-b3b3-ea28854e26af:boa-bank-cust-acct-creation:1.0.1:raml:zip:boa-bank-cust-acct-creation.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+	<configuration-properties doc:name="Configuration properties" doc:id="17cd5234-aba0-41d8-bc0f-462c59a91d86" file="dev.yaml" />
+	<snowflake:snowflake-config name="Snowflake_Config" doc:name="Snowflake Config" doc:id="4e6470c0-fab8-4b38-bd9d-6be7c8328b75" >
+		<snowflake:snowflake-connection accountName="${db.Account Name}" warehouse="${db.Warehouse}" database="${db.Database}" schema="${db.Schema}" user="${db.User}" password="${db.Password}" role="${db.Role}" />
+	</snowflake:snowflake-config>
+	<email:smtp-config name="Email_SMTP" doc:name="Email SMTP" doc:id="44493a7a-6084-4553-bf7b-05bc76f7d296" >
+		<email:smtp-connection host="${email.host}" port="${email.port}" user="${email.user}" password="${email.password}" >
+			<email:properties >
+				<email:property key="mail.smtp.starttls.enable" value="true" />
+			</email:properties>
+		</email:smtp-connection>
+	</email:smtp-config>
+	<file:config name="File_Config" doc:name="File Config" doc:id="41ea0597-064e-4662-8fe1-f689f5480b3c" >
+		<file:connection workingDir="C:\Users\pavit\Downloads\logo" />
+	</file:config>
+	<flow name="boa-bank-cust-acct-creation-main">
+        <http:listener config-ref="boa-bank-cust-acct-creation-httpListenerConfig" path="/api/*">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body>#[payload]</http:body>
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:error-response>
+        </http:listener>
+        <logger level="INFO" doc:name="Logger" doc:id="70d55180-ef50-4cae-aa97-7958ecf51592" message='#["Flow Started"]'/>
+		<apikit:router config-ref="boa-bank-cust-acct-creation-config" />
+        <error-handler>
+            <on-error-propagate type="APIKIT:BAD_REQUEST">
+                <ee:transform doc:name="Transform Message">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Bad request"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">400</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_FOUND">
+                <ee:transform doc:name="Transform Message">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">404</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:METHOD_NOT_ALLOWED">
+                <ee:transform doc:name="Transform Message">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Method not allowed"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">405</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_ACCEPTABLE">
+                <ee:transform doc:name="Transform Message">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not acceptable"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">406</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:UNSUPPORTED_MEDIA_TYPE">
+                <ee:transform doc:name="Transform Message">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Unsupported media type"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">415</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_IMPLEMENTED">
+                <ee:transform doc:name="Transform Message">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not Implemented"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">501</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+    <flow name="boa-bank-cust-acct-gmail-generation-flow" doc:id="158e31a6-e556-4577-b027-1f42f32a986b" >
+		<ee:transform doc:name="Transform Message" doc:id="209d4393-8345-4faf-bb98-1d6b390becfe">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+
+"congratulations your account is successfully created with account number" ++ " " ++ vars.acctNum as String ++ " with" ++" "++ vars.bank as String ++ " "++ "bank"
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<email:send doc:name="Send" doc:id="fdf06acb-629f-4597-a858-ba84ed293b12" config-ref="Email_SMTP" fromAddress="${email.user}" subject='#["Congratulations! Your account is created with Bank" ++" " ++ vars.bank as String]'>
+			<email:to-addresses >
+				<email:to-address value="maniravella5@gmail.com" />
+			</email:to-addresses>
+			<email:body contentType="text/plain" >
+			</email:body>
+		</email:send>
+	</flow>
+	<flow name="post:\createAccount:application\json:boa-bank-cust-acct-creation-config">
+		<set-variable value="#[attributes.queryParams.customerName]" doc:name="customerName" doc:id="85ffa80e-bcf2-4050-9f7c-9a8d5e6cd8f1" variableName="customerName"/>
+		<set-variable value="#[attributes.queryParams.bank]" doc:name="bank" doc:id="4a15fa7a-68a8-4abb-a49a-121c94403091" variableName="bank"/>
+		<set-variable value='#[attributes.queryParams."type"]' doc:name="type" doc:id="e3f94911-eaab-4f89-9f1b-e3c78c144392" variableName="type"/>
+		<set-variable value="#[attributes.queryParams.branchName]" doc:name="branchName" doc:id="0eb903b0-1b85-44b9-8efc-ac3355fd338f" variableName="branchName" />
+		<set-variable value="#[payload.accountNum]" doc:name="acctNum" doc:id="b4da5195-880d-4cbd-898f-b2b26b85dbf8" variableName="acctNum"/>
+		<set-variable value="#[payload.mailId]" doc:name="email" doc:id="a9f006f6-d6ac-42cd-8872-274346225294" variableName="email"/>
+		<set-variable value="#[[]]" doc:name="empty List" doc:id="4bfa5e8a-26a9-4300-896d-79e1c496ebae" variableName="inpPayload"/>
+		<set-variable value="#[%dw 2.0&#10;output application/json&#10;---&#10;vars.inpPayload &lt;&lt; payload]" doc:name="StorePayload" doc:id="287d7dc9-d6bc-4366-8b27-69b871ac1340" variableName="inpPayload"/>
+		<snowflake:select doc:name="Select" doc:id="47fde5d6-e379-499b-8f1c-b69e7a165f55" config-ref="Snowflake_Config">
+			<snowflake:sql ><![CDATA[select custAccNum,bankName from Bank_Transactions where custAccNum =:custAccNum and bankName =:bankName]]></snowflake:sql>
+			<snowflake:input-parameters ><![CDATA[#[{
+	"custAccNum":payload.accountNum,
+	"bankName":vars.bank
+}]]]></snowflake:input-parameters>
+		</snowflake:select>
+		<choice doc:name="Choice" doc:id="c9ae2a0e-b19c-493d-ba47-008406906e9c" >
+			<when expression="#[sizeOf(payload) &gt;=1]">
+				<ee:transform doc:name="Transform Message" doc:id="8f68cd81-d64e-4d9b-b850-9f6bf136fc23">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+
+payload map {
+	"status": "Account with " ++ $.CUSTACCNUM ++ " already exists"
+	}
+	
+
+]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<otherwise >
+				<snowflake:insert doc:name="Insert" doc:id="7de46ca6-5542-4f1e-bf62-8d62da6312a0" config-ref="Snowflake_Config" >
+					<snowflake:sql ><![CDATA[insert into Bank_Transactions(custName,custAccNum,atmPin,bankName,accountType,ifscCode,branchName,transactionTimeStamp,mailId,phoneNumber) values(:custName,:custAccNum,:atmPin,:bankName,:accountType,:ifscCode,:branchName,:transactionTimeStamp,:mailId,:phoneNumber)]]></snowflake:sql>
+					<snowflake:input-parameters ><![CDATA[#[%dw 2.0
+output application/json
+---
+{
+	(vars.inpPayload map {
+	custName: vars.customerName,
+	custAccNum: $.accountNum,
+	atmPin: $.atmPin,
+	bankName: vars.bank,
+	accountType: vars."type",
+	ifscCode: $.ifscCode,
+	branchName: vars.branchName,
+	transactionTimeStamp: now() as String {format:"yyyy-MM-dd"},
+	mailId: $.mailId,
+	phoneNumber: $.contact
+	}
+	)
+}]]]></snowflake:input-parameters>
+				</snowflake:insert>
+				<flow-ref doc:name="Flow Reference" doc:id="0cd98035-ca9c-4fc0-aacd-1a97c9f539bd" name="boa-bank-cust-acct-gmail-generation-flow"/>
+				<ee:transform doc:name="Transform Message" doc:id="b04484a4-c0fd-45c1-8073-beb4911b31f3">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+vars.inpPayload map{
+	"status": "Account Successfully created with account Number - " ++$.accountNum
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</otherwise>
+		</choice>
+    </flow>
+</mule>

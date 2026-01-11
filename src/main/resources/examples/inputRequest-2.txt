@@ -1,0 +1,12 @@
+{
+    "cid": 1,
+    "accountNum": "1234567897",
+    "atmPin": "1234",
+    "ifscCode": "ICICI4002",
+    "depositAmount": "40000",
+    "accountStatus": "Active",
+    "wrongPin": 1,
+    "mailId": "mani@gmail.com",
+    "contact": "8106351021"
+}
+

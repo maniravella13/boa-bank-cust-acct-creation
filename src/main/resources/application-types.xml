@@ -1,0 +1,27 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<types:mule xmlns:types="http://www.mulesoft.org/schema/mule/types">
+  <types:catalog>
+    <types:type name="demo" format="json">
+      <types:shape format="weave" example="examples/inputRequest-3.txt"><![CDATA[%dw 2.0
+
+type demo = {|
+  cid: Number {"typeId": "int"}, 
+  customerName: String, 
+  bank: String, 
+  "type": String, 
+  branchName: String, 
+  accountNum: String, 
+  atmPin: String, 
+  ifscCode: String, 
+  depositAmount: String, 
+  accountStatus: String, 
+  wrongPin: Number {"typeId": "int"}, 
+  mailId: String, 
+  contact: String, 
+  transactionTimeStamp: String
+|} {"example": "{\\\"cid\\\":1,\\\"customerName\\\":\\\"mani\\\",\\\"bank\\\":\\\"ICICI\\\",\\\"type\\\":\\\"savings\\\",\\\"branchName\\\":\\\"HYBD\\\",\\\"accountNum\\\":\\\"1234567897\\\",\\\"atmPin\\\":\\\"1234\\\",\\\"ifscCode\\\":\\\"ICICI4002\\\",\\\"depositAmount\\\":\\\"40000\\\",\\\"accountStatus\\\":\\\"Active\\\",\\\"wrongPin\\\":1,\\\"mailId\\\":\\\"mani@gmail.com\\\",\\\"contact\\\":\\\"8106351021\\\",\\\"transactionTimeStamp\\\":\\\"2025-12-29 15:30:45\\\"}"}
+
+]]></types:shape>
+    </types:type>
+  </types:catalog>
+</types:mule>

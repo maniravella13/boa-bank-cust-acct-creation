@@ -1,0 +1,16 @@
+{
+    "cid": 100,
+    "custName": "mani",
+    "custAccNum": "1234567897",
+    "atmPin": "1234",
+    "bankName": "ICICI",
+    "accountType": "savings",
+    "ifscCode": "ICICI4002",
+    "branchName": "ICICI",
+    "totalBalance": "40000",
+    "transactionTimeStamp": "2025-12-29",
+    "accountStatus": "Active",
+    "wrongPin": 1,
+    "mailId": "mani@gmail.com",
+    "phoneNumber": "8106351021"
+}
